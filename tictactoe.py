@@ -1,76 +1,87 @@
-import os
+import random
 print("WELCOME TO TIC-TAC-TOE")
 
-def printBoard(gameValues):
+board = [' ' for _ in range(9)]
 
-    print(f" {gameValues[0]} | {gameValues[1]} | {gameValues[2]} ")
-    print(f"---|---|---")
-    print(f" {gameValues[3]} | {gameValues[4]} | {gameValues[5]} ")
-    print(f"---|---|---")
-    print(f" {gameValues[6]} | {gameValues[7]} | {gameValues[8]} ")
+def print_board():
+    for row in [board[i:i+3] for i in range(0, 9, 3)]:
+        print(' | '.join(row))
+        print('---------')
 
-def checkWin(gameValues):
-    wins = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
+def check_win(board, player):
+    win_combinations = [(0, 1, 2), (3, 4, 5), (6, 7, 8),
+                        (0, 3, 6), (1, 4, 7), (2, 5, 8),
+                        (0, 4, 8), (2, 4, 6)]
+    for combo in win_combinations:
+        if all(board[i] == player for i in combo):
+            return True
+    return False
 
-    for win in wins:
-        if(gameValues[win[0]] == gameValues[win[1]] == gameValues[win[2]] == 'X'):
-            printBoard(gameValues)
-            print("X Won the match")
-            return 1
+def check_draw(board):
+    return ' ' not in board
 
-        if(gameValues[win[0]] == gameValues[win[1]] == gameValues[win[2]] == 'O'):
-            printBoard(gameValues)
-            print("O Won the match")
-            return 0
+def available_moves(board):
+    return [i for i, spot in enumerate(board) if spot == ' ']
 
-        if all(isinstance(item, str) for item in gameValues):
-            printBoard(gameValues)
-            return -2
-    return -1
+def minimax(board, depth, is_maximizing):
+    if check_win(board, 'X'):
+        return -1
+    elif check_win(board, 'O'):
+        return 1
+    elif check_draw(board):
+        return 0
 
-if __name__ == '__main__':
-    print("Welcome to the Game")
-    gameValues=[0, 1, 2, 3, 4, 5, 6, 7, 8]
-    chance = 1
+    if is_maximizing:
+        max_eval = float('-inf')
+        for move in available_moves(board):
+            board[move] = 'O'
+            eval = minimax(board, depth + 1, False)
+            board[move] = ' '
+            max_eval = max(max_eval, eval)
+        return max_eval
+    else:
+        min_eval = float('inf')
+        for move in available_moves(board):
+            board[move] = 'X'
+            eval = minimax(board, depth + 1, True)
+            board[move] = ' '
+            min_eval = min(min_eval, eval)
+        return min_eval
 
-    while(True):
-        try:
-            if chance == 1:
-                printBoard(gameValues)
-                print("\nX's Chance")
-                value = int(input("\nPlease enter a value: "))
+def ai_move():
+    best_move = None
+    best_eval = float('-inf')
+    for move in available_moves(board):
+        board[move] = 'O'
+        eval = minimax(board, 0, False)
+        board[move] = ' '
+        if eval > best_eval:
+            best_eval = eval
+            best_move = move
+    return best_move
 
-                if gameValues[value]!= 'O':
-                    gameValues[value] = 'X'
-                else:
-                    os.system('CLS')
-                    print("\nPlease Enter Different Location for X")
-                    continue
-                os.system('CLS')
+while True:
+    print_board()
+    if check_win(board, 'X'):
+        print("You win!")
+        break
+    elif check_win(board, 'O'):
+        print("AI wins!")
+        break
+    elif check_draw(board):
+        print("It's a draw!")
+        break
 
-            if chance == 0:
-                printBoard(gameValues)
-                print("\nZ's Chance")
-                value = int(input("\nPlease enter a value: "))
+    player_move = int(input("Enter your move (0-8): "))
+    if board[player_move] == ' ':
+        board[player_move] = 'X'
+    else:
+        print("Invalid move. Try again.")
+        continue
 
-                if gameValues[value]!= 'X':
-                    gameValues[value] = 'O'
-                else:
-                    os.system('CLS')
-                    print("\nPlease Enter Different Location for O")
-                    continue
-                os.system('CLS')
+    if check_draw(board):
+        print("It's a draw!")
+        break
 
-        except IndexError:
-            os.system('CLS')
-            print("\nOops!! Please Enter value from 0 - 8\n")
-            continue
-
-        chance = 1 - chance
-        cwin = checkWin(gameValues)
-        if(cwin == -2):
-            print("Game Draw")
-            break
-        if(cwin != -1):
-            print("Match over")
-            break
+    ai_turn = ai_move()
+    board[ai_turn] = 'O'
